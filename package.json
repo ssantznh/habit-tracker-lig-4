@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate-icons": "open generate-icons.html",
+    "generate-favicon": "open create-favicon.html"
   },
   "dependencies": {
     "next": "14.0.4",
