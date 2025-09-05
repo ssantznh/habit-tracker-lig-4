@@ -37,6 +37,7 @@ export default function ConnectFourHabitTracker() {
   const [records, setRecords] = useState({});
   const [darkMode, setDarkMode] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' or 'summary'
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -149,6 +150,31 @@ export default function ConnectFourHabitTracker() {
       missed,
       totalMarked,
       pct: totalMarked ? Math.round((done / totalMarked) * 100) : 0,
+    };
+  };
+
+  // Calculate total cumprido across all months for unbroken habits
+  const getHabitSummary = (habitId) => {
+    let totalCumprido = 0;
+    let isBroken = false;
+    
+    // Check all months in records
+    Object.values(records).forEach(monthData => {
+      const habitData = monthData[habitId];
+      if (habitData) {
+        Object.values(habitData).forEach(status => {
+          if (status === "done") {
+            totalCumprido++;
+          } else if (status === "missed") {
+            isBroken = true;
+          }
+        });
+      }
+    });
+    
+    return {
+      totalCumprido: isBroken ? 0 : totalCumprido, // Only count if not broken
+      isBroken
     };
   };
 
@@ -385,6 +411,136 @@ export default function ConnectFourHabitTracker() {
     );
   }
 
+  // Summary tab component
+  function SummaryTab() {
+    const unbrokenHabits = habits.filter(habit => {
+      const summary = getHabitSummary(habit.id);
+      return !summary.isBroken && summary.totalCumprido > 0;
+    });
+
+    const totalCumprido = unbrokenHabits.reduce((sum, habit) => {
+      const summary = getHabitSummary(habit.id);
+      return sum + summary.totalCumprido;
+    }, 0);
+
+    if (habits.length === 0) {
+      return <EmptyState />;
+    }
+
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        className="space-y-6"
+      >
+        {/* Summary Header */}
+        <div className="rounded-3xl bg-gradient-to-br from-white/80 to-slate-50/80 p-6 shadow-2xl ring-1 ring-slate-200/50 backdrop-blur-sm">
+          <div className="text-center">
+            <h2 className="mb-2 text-2xl font-bold text-slate-800">Resumo dos Hábitos</h2>
+            <p className="text-slate-600 mb-4">Total de dias cumpridos sem interrupção</p>
+            <div className="inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 shadow-lg ring-1 ring-emerald-200/50">
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+              <div>
+                <div className="text-3xl font-bold text-emerald-700">{totalCumprido}</div>
+                <div className="text-sm font-medium text-emerald-600">dias cumpridos</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Habit Cards */}
+        {unbrokenHabits.length === 0 ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="rounded-3xl bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 p-12 shadow-inner ring-1 ring-amber-200/50"
+          >
+            <div className="text-center">
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-orange-100 shadow-lg ring-1 ring-amber-200/50">
+                <XCircle className="h-10 w-10 text-amber-500" />
+              </div>
+              <h3 className="mb-3 text-xl font-bold text-amber-800">Nenhum hábito ininterrupto</h3>
+              <p className="text-amber-600">
+                Todos os hábitos foram quebrados em algum momento. Mantenha a consistência para ver o resumo!
+              </p>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {unbrokenHabits.map((habit, index) => {
+              const summary = getHabitSummary(habit.id);
+              return (
+                <motion.div
+                  key={habit.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 * index }}
+                  className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/90 to-slate-50/90 p-6 shadow-lg ring-1 ring-slate-200/50 backdrop-blur-sm transition-all hover:shadow-xl hover:ring-indigo-300/50"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="mb-2 text-lg font-bold text-slate-800 group-hover:text-indigo-700 transition-colors">
+                        {habit.name}
+                      </h3>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-emerald-700 ring-1 ring-emerald-200/50">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span className="text-sm font-semibold">{summary.totalCumprido}</span>
+                        </div>
+                        <span className="text-xs text-slate-500">dias cumpridos</span>
+                      </div>
+                    </div>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 shadow-sm ring-1 ring-emerald-200/50">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                    </div>
+                  </div>
+                  
+                  {/* Progress bar */}
+                  <div className="mt-4">
+                    <div className="mb-1 flex justify-between text-xs text-slate-500">
+                      <span>Progresso</span>
+                      <span>{summary.totalCumprido} dias</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-200">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((summary.totalCumprido / 30) * 100, 100)}%` }}
+                        transition={{ duration: 0.8, delay: 0.2 + index * 0.1 }}
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Subtle glow effect */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-500/0 to-teal-500/0 opacity-0 blur-sm transition-opacity group-hover:opacity-10" />
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Broken habits info */}
+        {habits.length > unbrokenHabits.length && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="rounded-2xl bg-gradient-to-r from-slate-50 to-gray-50 p-4 shadow-sm ring-1 ring-slate-200/50"
+          >
+            <div className="flex items-center gap-3 text-sm text-slate-600">
+              <XCircle className="h-4 w-4 text-slate-400" />
+              <span>
+                {habits.length - unbrokenHabits.length} hábito(s) foram quebrados e não aparecem no resumo
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
+    );
+  }
+
   // Empty state component
   function EmptyState() {
     return (
@@ -525,126 +681,168 @@ export default function ConnectFourHabitTracker() {
           </div>
         </motion.div>
 
-        {/* Legend */}
+        {/* Tab Navigation */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mb-6 flex flex-wrap items-center gap-3"
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mb-6"
         >
-          <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3 shadow-sm ring-1 ring-emerald-200/50">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm ring-1 ring-emerald-300/50">
-              <CheckCircle2 className="h-2.5 w-2.5 text-white" />
-            </div>
-            <span className="text-sm font-medium text-emerald-700">Cumprido</span>
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-red-50 to-rose-50 px-4 py-3 shadow-sm ring-1 ring-red-200/50">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-sm ring-1 ring-red-300/50">
-              <XCircle className="h-2.5 w-2.5 text-white" />
-            </div>
-            <span className="text-sm font-medium text-red-700">Não cumprido</span>
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-slate-50 to-gray-50 px-4 py-3 shadow-sm ring-1 ring-slate-200/50">
-            <div className="h-4 w-4 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 shadow-sm ring-1 ring-slate-300/50" />
-            <span className="text-sm font-medium text-slate-600">Sem marcação</span>
+          <div className="flex gap-2 rounded-2xl bg-white/60 p-2 shadow-lg ring-1 ring-slate-200/50 backdrop-blur-sm">
+            <motion.button
+              onClick={() => setActiveTab('calendar')}
+              className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+                activeTab === 'calendar'
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              📅 Calendário
+            </motion.button>
+            <motion.button
+              onClick={() => setActiveTab('summary')}
+              className={`flex-1 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
+                activeTab === 'summary'
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              📊 Resumo
+            </motion.button>
           </div>
         </motion.div>
 
-      {/* Add Habit - only show when there are habits */}
-      {habits.length > 0 && (
-        <div className="mb-6">
-          <AddHabit />
-        </div>
-      )}
+        {/* Main Content */}
+        {activeTab === 'calendar' ? (
+          <>
+            {/* Legend */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="mb-6 flex flex-wrap items-center gap-3"
+            >
+              <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3 shadow-sm ring-1 ring-emerald-200/50">
+                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm ring-1 ring-emerald-300/50">
+                  <CheckCircle2 className="h-2.5 w-2.5 text-white" />
+                </div>
+                <span className="text-sm font-medium text-emerald-700">Cumprido</span>
+              </div>
+              <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-red-50 to-rose-50 px-4 py-3 shadow-sm ring-1 ring-red-200/50">
+                <div className="flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-sm ring-1 ring-red-300/50">
+                  <XCircle className="h-2.5 w-2.5 text-white" />
+                </div>
+                <span className="text-sm font-medium text-red-700">Não cumprido</span>
+              </div>
+              <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-slate-50 to-gray-50 px-4 py-3 shadow-sm ring-1 ring-slate-200/50">
+                <div className="h-4 w-4 rounded-full bg-gradient-to-br from-slate-200 to-slate-300 shadow-sm ring-1 ring-slate-300/50" />
+                <span className="text-sm font-medium text-slate-600">Sem marcação</span>
+              </div>
+            </motion.div>
 
-        {/* Grid or Empty State */}
-        {habits.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="overflow-auto rounded-3xl bg-gradient-to-br from-white/80 to-slate-50/80 p-6 shadow-2xl ring-1 ring-slate-200/50 backdrop-blur-sm"
-          >
-            <div className="min-w-[800px]">
-              <div className="grid gap-1" style={{ gridTemplateColumns: `100px repeat(${habits.length}, minmax(140px, 1fr))` }}>
-                {/* Corner empty */}
-                <div />
-                {/* Habit headers */}
-                {habits.map((habit, index) => (
-                  <motion.div 
-                    key={habit.id} 
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 * index }}
-                    className="sticky top-0 z-10 -mx-2 -mt-2 rounded-2xl bg-white/90 p-4 shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
-                  >
-                    <HabitHeader habit={habit} />
-                  </motion.div>
-                ))}
-                {/* Rows */}
-                {daysArray.map((day, dayIndex) => (
-                  <React.Fragment key={day}>
-                    {/* Day label */}
-                    <motion.div 
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: 0.1 * dayIndex }}
-                      className="sticky left-0 z-10 -ml-2 -my-1 flex items-center justify-between rounded-2xl bg-white/90 px-4 py-3 text-sm font-semibold shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
-                    >
-                      <span className="text-slate-800">{pad(day)}/{pad(month + 1)}</span>
-                      <span className="text-slate-500 text-xs">{new Date(year, month, day).toLocaleDateString("pt-BR", { weekday: "short" })}</span>
-                    </motion.div>
-                    {/* Cells */}
-                    {habits.map((habit, habitIndex) => (
+            {/* Add Habit - only show when there are habits */}
+            {habits.length > 0 && (
+              <div className="mb-6">
+                <AddHabit />
+              </div>
+            )}
+
+            {/* Grid or Empty State */}
+            {habits.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="overflow-auto rounded-3xl bg-gradient-to-br from-white/80 to-slate-50/80 p-6 shadow-2xl ring-1 ring-slate-200/50 backdrop-blur-sm"
+              >
+                <div className="min-w-[800px]">
+                  <div className="grid gap-1" style={{ gridTemplateColumns: `100px repeat(${habits.length}, minmax(140px, 1fr))` }}>
+                    {/* Corner empty */}
+                    <div />
+                    {/* Habit headers */}
+                    {habits.map((habit, index) => (
                       <motion.div 
-                        key={habit.id + "-" + day} 
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3, delay: 0.05 * (dayIndex + habitIndex) }}
-                        className="border-b border-slate-200/40 p-2 hover:bg-slate-50/50 transition-colors"
+                        key={habit.id} 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 * index }}
+                        className="sticky top-0 z-10 -mx-2 -mt-2 rounded-2xl bg-white/90 p-4 shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
                       >
-                        <Cell habitId={habit.id} day={day} />
+                        <HabitHeader habit={habit} />
                       </motion.div>
                     ))}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
+                    {/* Rows */}
+                    {daysArray.map((day, dayIndex) => (
+                      <React.Fragment key={day}>
+                        {/* Day label */}
+                        <motion.div 
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: 0.1 * dayIndex }}
+                          className="sticky left-0 z-10 -ml-2 -my-1 flex items-center justify-between rounded-2xl bg-white/90 px-4 py-3 text-sm font-semibold shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
+                        >
+                          <span className="text-slate-800">{pad(day)}/{pad(month + 1)}</span>
+                          <span className="text-slate-500 text-xs">{new Date(year, month, day).toLocaleDateString("pt-BR", { weekday: "short" })}</span>
+                        </motion.div>
+                        {/* Cells */}
+                        {habits.map((habit, habitIndex) => (
+                          <motion.div 
+                            key={habit.id + "-" + day} 
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.3, delay: 0.05 * (dayIndex + habitIndex) }}
+                            className="border-b border-slate-200/40 p-2 hover:bg-slate-50/50 transition-colors"
+                          >
+                            <Cell habitId={habit.id} day={day} />
+                          </motion.div>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-        {/* Footer actions - only show when there are habits */}
-        {habits.length > 0 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white/60 p-6 shadow-lg ring-1 ring-slate-200/50 backdrop-blur-sm"
-          >
-            <div className="max-w-prose">
-              <p className="text-sm text-slate-600">
-                💡 <span className="font-semibold">Dica:</span> Clique em um círculo para alternar entre <span className="font-bold text-emerald-600">cumprido</span> (verde) e <span className="font-bold text-red-600">não cumprido</span> (vermelho). Clique com o botão direito para limpar.
-              </p>
-            </div>
-            <motion.button
-              onClick={() => {
-                if (confirm("Limpar todas as marcações deste mês?")) {
-                  setRecords((r) => {
-                    const copy = { ...r };
-                    copy[monthKey] = {};
-                    return copy;
-                  });
-                }
-              }}
-              className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-2.5 font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:shadow-md"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              🗑️ Limpar mês atual
-            </motion.button>
-          </motion.div>
+            {/* Footer actions - only show when there are habits */}
+            {habits.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white/60 p-6 shadow-lg ring-1 ring-slate-200/50 backdrop-blur-sm"
+              >
+                <div className="max-w-prose">
+                  <p className="text-sm text-slate-600">
+                    💡 <span className="font-semibold">Dica:</span> Clique em um círculo para alternar entre <span className="font-bold text-emerald-600">cumprido</span> (verde) e <span className="font-bold text-red-600">não cumprido</span> (vermelho). Clique com o botão direito para limpar.
+                  </p>
+                </div>
+                <motion.button
+                  onClick={() => {
+                    if (confirm("Limpar todas as marcações deste mês?")) {
+                      setRecords((r) => {
+                        const copy = { ...r };
+                        copy[monthKey] = {};
+                        return copy;
+                      });
+                    }
+                  }}
+                  className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-2.5 font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:shadow-md"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  🗑️ Limpar mês atual
+                </motion.button>
+              </motion.div>
+            )}
+          </>
+        ) : (
+          <SummaryTab />
         )}
 
         {/* Subtext */}
