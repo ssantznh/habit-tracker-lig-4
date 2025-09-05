@@ -349,25 +349,61 @@ export default function ConnectFourHabitTracker() {
 
   // Calculate total cumprido across all months for unbroken habits
   const getHabitSummary = (habitId) => {
-    let totalCumprido = 0;
-    let isBroken = false;
+    // Collect all records in chronological order
+    const allRecords = [];
     
-    // Check all months in records
-    Object.values(records).forEach(monthData => {
+    Object.entries(records).forEach(([monthKey, monthData]) => {
       const habitData = monthData[habitId];
       if (habitData) {
-        Object.values(habitData).forEach(status => {
-          if (status === "done") {
-            totalCumprido++;
-          } else if (status === "missed") {
-            isBroken = true;
-          }
+        Object.entries(habitData).forEach(([day, status]) => {
+          const [year, month] = monthKey.split('-');
+          allRecords.push({
+            date: new Date(parseInt(year), parseInt(month) - 1, parseInt(day)),
+            status,
+            monthKey,
+            day: parseInt(day)
+          });
         });
       }
     });
     
+    // Sort by date
+    allRecords.sort((a, b) => a.date - b.date);
+    
+    if (allRecords.length === 0) {
+      return { totalCumprido: 0, isBroken: false };
+    }
+    
+    // Find the last "missed" record
+    let lastMissedIndex = -1;
+    for (let i = allRecords.length - 1; i >= 0; i--) {
+      if (allRecords[i].status === "missed") {
+        lastMissedIndex = i;
+        break;
+      }
+    }
+    
+    // Count "done" records after the last "missed" (or from beginning if never missed)
+    const startIndex = lastMissedIndex + 1;
+    let totalCumprido = 0;
+    
+    for (let i = startIndex; i < allRecords.length; i++) {
+      if (allRecords[i].status === "done") {
+        totalCumprido++;
+      }
+    }
+    
+    // A habit is considered "broken" only if it has recent "missed" records
+    // and no recent "done" records (indicating it was abandoned)
+    const recentRecords = allRecords.slice(-7); // Last 7 records
+    const hasRecentMissed = recentRecords.some(r => r.status === "missed");
+    const hasRecentDone = recentRecords.some(r => r.status === "done");
+    
+    // If there are recent missed records but no recent done records, consider broken
+    const isBroken = hasRecentMissed && !hasRecentDone;
+    
     return {
-      totalCumprido: isBroken ? 0 : totalCumprido, // Only count if not broken
+      totalCumprido: isBroken ? 0 : totalCumprido,
       isBroken
     };
   };
