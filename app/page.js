@@ -176,6 +176,7 @@ export default function ConnectFourHabitTracker() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' or 'summary'
   const [isHorizontalLayout, setIsHorizontalLayout] = useState(false);
+  const [showAutoMarkNotification, setShowAutoMarkNotification] = useState(false);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -188,6 +189,56 @@ export default function ConnectFourHabitTracker() {
       setIsLoaded(true);
     }
   }, []);
+
+  // Auto-mark today's habits as "cumprido" if not already marked
+  useEffect(() => {
+    if (!isLoaded || habits.length === 0) return;
+
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    const currentDay = today.getDate();
+    
+    // Only auto-mark if we're viewing the current month
+    if (year === currentYear && month === currentMonth) {
+      const currentMonthKey = getMonthKey(currentYear, currentMonth);
+      const currentMonthRecords = records[currentMonthKey] || {};
+      
+      // Check if any habits are unmarked for today
+      const needsAutoMark = habits.some(habit => {
+        const habitRecords = currentMonthRecords[habit.id] || {};
+        return habitRecords[currentDay] === undefined;
+      });
+
+      if (needsAutoMark) {
+        setRecords((r) => {
+          const copy = { ...r };
+          const mk = currentMonthKey;
+          copy[mk] = copy[mk] ? { ...copy[mk] } : {};
+          
+          let markedCount = 0;
+          habits.forEach(habit => {
+            const habitDays = copy[mk][habit.id] ? { ...copy[mk][habit.id] } : {};
+            // Only mark as "done" if not already marked
+            if (habitDays[currentDay] === undefined) {
+              habitDays[currentDay] = "done";
+              copy[mk][habit.id] = habitDays;
+              markedCount++;
+            }
+          });
+          
+          // Show notification if any habits were auto-marked
+          if (markedCount > 0) {
+            setShowAutoMarkNotification(true);
+            // Hide notification after 3 seconds
+            setTimeout(() => setShowAutoMarkNotification(false), 3000);
+          }
+          
+          return copy;
+        });
+      }
+    }
+  }, [isLoaded, habits, records, year, month]);
 
   // Persist data to localStorage
   useEffect(() => {
@@ -952,6 +1003,35 @@ export default function ConnectFourHabitTracker() {
             </div>
           </div>
         </motion.div>
+
+        {/* Auto-mark notification */}
+        <AnimatePresence>
+          {showAutoMarkNotification && (
+            <motion.div
+              initial={{ opacity: 0, y: -50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -50, scale: 0.9 }}
+              transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+              className="mb-4"
+            >
+              <div className="mx-auto max-w-md rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 p-4 shadow-lg ring-1 ring-emerald-200/50 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm ring-1 ring-emerald-300/50">
+                    <CheckCircle2 className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-800">
+                      Hábitos marcados automaticamente
+                    </p>
+                    <p className="text-xs text-emerald-600">
+                      Os hábitos de hoje foram marcados como cumpridos
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Tab Navigation */}
         <motion.div 
