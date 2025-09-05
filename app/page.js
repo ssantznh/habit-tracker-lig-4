@@ -175,7 +175,7 @@ export default function ConnectFourHabitTracker() {
   const [darkMode, setDarkMode] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' or 'summary'
-  const [isHorizontalLayout, setIsHorizontalLayout] = useState(false);
+  const [isHorizontalLayout, setIsHorizontalLayout] = useState(true);
   const [showAutoMarkNotification, setShowAutoMarkNotification] = useState(false);
 
   // Load data from localStorage on mount
@@ -185,7 +185,7 @@ export default function ConnectFourHabitTracker() {
       setHabits(saved.habits || []);
       setRecords(saved.records || {});
       setDarkMode(saved.darkMode || false);
-      setIsHorizontalLayout(saved.isHorizontalLayout || false);
+      setIsHorizontalLayout(saved.isHorizontalLayout !== undefined ? saved.isHorizontalLayout : true);
       setIsLoaded(true);
     }
   }, []);
