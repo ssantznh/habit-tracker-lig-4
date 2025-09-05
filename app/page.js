@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, CheckCircle2, XCircle, Calendar as CalendarIcon, Sun, Moon, Download, Upload } from "lucide-react";
+import { Plus, Trash2, Edit2, CheckCircle2, XCircle, Calendar as CalendarIcon, Sun, Moon, Download, Upload, RotateCcw, RotateCw } from "lucide-react";
 
 // === Helpers ===
 const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
@@ -175,6 +175,7 @@ export default function ConnectFourHabitTracker() {
   const [darkMode, setDarkMode] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' or 'summary'
+  const [isHorizontalLayout, setIsHorizontalLayout] = useState(false);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -183,6 +184,7 @@ export default function ConnectFourHabitTracker() {
       setHabits(saved.habits || []);
       setRecords(saved.records || {});
       setDarkMode(saved.darkMode || false);
+      setIsHorizontalLayout(saved.isHorizontalLayout || false);
       setIsLoaded(true);
     }
   }, []);
@@ -190,10 +192,10 @@ export default function ConnectFourHabitTracker() {
   // Persist data to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
-      const payload = { habits, records, darkMode };
+      const payload = { habits, records, darkMode, isHorizontalLayout };
       localStorage.setItem(storageKey, JSON.stringify(payload));
     }
-  }, [habits, records, darkMode, isLoaded]);
+  }, [habits, records, darkMode, isHorizontalLayout, isLoaded]);
 
   // Apply dark mode to document
   useEffect(() => {
@@ -852,6 +854,21 @@ export default function ConnectFourHabitTracker() {
               </div>
               
               <motion.button
+                onClick={() => setIsHorizontalLayout(!isHorizontalLayout)}
+                className="group flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/80 text-slate-600 shadow-sm backdrop-blur-sm transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-md dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700"
+                title={isHorizontalLayout ? "Layout vertical" : "Layout horizontal"}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <motion.div
+                  initial={false}
+                  animate={{ rotate: isHorizontalLayout ? 90 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {isHorizontalLayout ? <RotateCcw className="h-5 w-5" /> : <RotateCw className="h-5 w-5" />}
+                </motion.div>
+              </motion.button>
+              <motion.button
                 onClick={() => setDarkMode(!darkMode)}
                 className="group flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/80 text-slate-600 shadow-sm backdrop-blur-sm transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-md dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700"
                 title={darkMode ? "Modo claro" : "Modo escuro"}
@@ -980,51 +997,113 @@ export default function ConnectFourHabitTracker() {
                 transition={{ duration: 0.6, delay: 0.3 }}
                 className="overflow-auto rounded-3xl bg-gradient-to-br from-white/80 to-slate-50/80 p-6 shadow-2xl ring-1 ring-slate-200/50 backdrop-blur-sm"
               >
-                <div className="min-w-[800px]">
-                  <div className="grid gap-1" style={{ gridTemplateColumns: `100px repeat(${habits.length}, minmax(140px, 1fr))` }}>
-                    {/* Corner empty */}
-                    <div />
-                    {/* Habit headers */}
-                    {habits.map((habit, index) => (
-                      <motion.div 
-                        key={habit.id} 
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: 0.1 * index }}
-                        className="sticky top-0 z-10 -mx-2 -mt-2 rounded-2xl bg-white/90 p-4 shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
-                      >
-                        <HabitHeader habit={habit} />
-                      </motion.div>
-                    ))}
-                    {/* Rows */}
-                    {daysArray.map((day, dayIndex) => (
-                      <React.Fragment key={day}>
-                        {/* Day label */}
+                {isHorizontalLayout ? (
+                  // Horizontal Layout: Habits as rows, Days as columns
+                  <div className="min-w-[800px]">
+                    <div className="grid gap-1" style={{ gridTemplateRows: `60px repeat(${habits.length}, minmax(80px, 1fr))` }}>
+                      {/* Day headers row */}
+                      <div className="sticky top-0 z-10 -mx-2 -mt-2 rounded-2xl bg-white/90 p-2 shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50">
+                        <div className="grid gap-1" style={{ gridTemplateColumns: `120px repeat(${totalDays}, minmax(60px, 1fr))` }}>
+                          <div className="flex items-center justify-center text-sm font-semibold text-slate-600">
+                            Hábitos
+                          </div>
+                          {daysArray.map((day, dayIndex) => (
+                            <motion.div 
+                              key={day}
+                              initial={{ opacity: 0, y: -20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.4, delay: 0.1 * dayIndex }}
+                              className="flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 px-2 py-2 text-xs font-semibold shadow-sm ring-1 ring-indigo-200/50"
+                            >
+                              <span className="text-slate-800">{pad(day)}</span>
+                              <span className="text-slate-500">{new Date(year, month, day).toLocaleDateString("pt-BR", { weekday: "short" })}</span>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Habit rows */}
+                      {habits.map((habit, habitIndex) => (
                         <motion.div 
+                          key={habit.id}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.4, delay: 0.1 * dayIndex }}
-                          className="sticky left-0 z-10 -ml-2 -my-1 flex items-center justify-between rounded-2xl bg-white/90 px-4 py-3 text-sm font-semibold shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
+                          transition={{ duration: 0.4, delay: 0.1 * habitIndex }}
+                          className="grid gap-1" 
+                          style={{ gridTemplateColumns: `120px repeat(${totalDays}, minmax(60px, 1fr))` }}
                         >
-                          <span className="text-slate-800">{pad(day)}/{pad(month + 1)}</span>
-                          <span className="text-slate-500 text-xs">{new Date(year, month, day).toLocaleDateString("pt-BR", { weekday: "short" })}</span>
-                        </motion.div>
-                        {/* Cells */}
-                        {habits.map((habit, habitIndex) => (
+                          {/* Habit header */}
                           <motion.div 
-                            key={habit.id + "-" + day} 
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3, delay: 0.05 * (dayIndex + habitIndex) }}
-                            className="border-b border-slate-200/40 p-2 hover:bg-slate-50/50 transition-colors"
+                            transition={{ duration: 0.3, delay: 0.05 * habitIndex }}
+                            className="sticky left-0 z-10 -ml-2 -my-1 rounded-2xl bg-white/90 p-3 shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
                           >
-                            <Cell habitId={habit.id} day={day} />
+                            <HabitHeader habit={habit} />
                           </motion.div>
-                        ))}
-                      </React.Fragment>
-                    ))}
+                          {/* Day cells */}
+                          {daysArray.map((day, dayIndex) => (
+                            <motion.div 
+                              key={habit.id + "-" + day} 
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3, delay: 0.05 * (habitIndex + dayIndex) }}
+                              className="border-r border-slate-200/40 p-2 hover:bg-slate-50/50 transition-colors"
+                            >
+                              <Cell habitId={habit.id} day={day} />
+                            </motion.div>
+                          ))}
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  // Vertical Layout: Days as rows, Habits as columns (original)
+                  <div className="min-w-[800px]">
+                    <div className="grid gap-1" style={{ gridTemplateColumns: `100px repeat(${habits.length}, minmax(140px, 1fr))` }}>
+                      {/* Corner empty */}
+                      <div />
+                      {/* Habit headers */}
+                      {habits.map((habit, index) => (
+                        <motion.div 
+                          key={habit.id} 
+                          initial={{ opacity: 0, y: -20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: 0.1 * index }}
+                          className="sticky top-0 z-10 -mx-2 -mt-2 rounded-2xl bg-white/90 p-4 shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
+                        >
+                          <HabitHeader habit={habit} />
+                        </motion.div>
+                      ))}
+                      {/* Rows */}
+                      {daysArray.map((day, dayIndex) => (
+                        <React.Fragment key={day}>
+                          {/* Day label */}
+                          <motion.div 
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1 * dayIndex }}
+                            className="sticky left-0 z-10 -ml-2 -my-1 flex items-center justify-between rounded-2xl bg-white/90 px-4 py-3 text-sm font-semibold shadow-lg backdrop-blur-sm ring-1 ring-slate-200/50"
+                          >
+                            <span className="text-slate-800">{pad(day)}/{pad(month + 1)}</span>
+                            <span className="text-slate-500 text-xs">{new Date(year, month, day).toLocaleDateString("pt-BR", { weekday: "short" })}</span>
+                          </motion.div>
+                          {/* Cells */}
+                          {habits.map((habit, habitIndex) => (
+                            <motion.div 
+                              key={habit.id + "-" + day} 
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ duration: 0.3, delay: 0.05 * (dayIndex + habitIndex) }}
+                              className="border-b border-slate-200/40 p-2 hover:bg-slate-50/50 transition-colors"
+                            >
+                              <Cell habitId={habit.id} day={day} />
+                            </motion.div>
+                          ))}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
 
