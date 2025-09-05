@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, CheckCircle2, XCircle, Calendar as CalendarIcon, Sun, Moon } from "lucide-react";
+import { Plus, Trash2, Edit2, CheckCircle2, XCircle, Calendar as CalendarIcon, Sun, Moon, Download, Upload } from "lucide-react";
 
 // === Helpers ===
 const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
@@ -26,6 +26,143 @@ const daysInMonth = (year, month /* 0-index */) => new Date(year, month + 1, 0).
 const getMonthKey = (year, month) => `${year}-${pad(month + 1)}`; // e.g., 2025-09
 
 const storageKey = "connect4_habit_tracker_v1";
+
+// === CSV Functions ===
+const exportToCSV = (habits, records) => {
+  const csvData = [];
+  
+  // Add header row
+  const header = ['Habit ID', 'Habit Name', 'Month', 'Day', 'Status'];
+  csvData.push(header.join(','));
+  
+  // Add data rows
+  habits.forEach(habit => {
+    Object.keys(records).forEach(monthKey => {
+      const monthData = records[monthKey];
+      if (monthData[habit.id]) {
+        Object.keys(monthData[habit.id]).forEach(day => {
+          const status = monthData[habit.id][day];
+          const [year, month] = monthKey.split('-');
+          const row = [
+            habit.id,
+            `"${habit.name.replace(/"/g, '""')}"`, // Escape quotes in habit names
+            monthKey,
+            day,
+            status
+          ];
+          csvData.push(row.join(','));
+        });
+      }
+    });
+  });
+  
+  return csvData.join('\n');
+};
+
+const importFromCSV = (csvText) => {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 2) {
+    throw new Error('Arquivo CSV deve ter pelo menos um cabeçalho e uma linha de dados');
+  }
+  
+  const header = lines[0].split(',');
+  const expectedHeaders = ['Habit ID', 'Habit Name', 'Month', 'Day', 'Status'];
+  
+  // Validate header
+  if (header.length < 5) {
+    throw new Error('Cabeçalho CSV inválido. Esperado: Habit ID, Habit Name, Month, Day, Status');
+  }
+  
+  const data = lines.slice(1);
+  const habitsMap = new Map();
+  const recordsMap = {};
+  let validRows = 0;
+  let invalidRows = 0;
+  
+  data.forEach((line, index) => {
+    if (!line.trim()) return; // Skip empty lines
+    
+    // Simple CSV parsing - handles quoted fields
+    const fields = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        fields.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    fields.push(current.trim());
+    
+    if (fields.length >= 5) {
+      const [habitId, habitName, monthKey, day, status] = fields;
+      
+      // Validate data
+      if (!habitId || !habitName || !monthKey || !day || !status) {
+        invalidRows++;
+        return;
+      }
+      
+      // Validate status
+      if (!['done', 'missed'].includes(status)) {
+        invalidRows++;
+        return;
+      }
+      
+      // Validate month format (YYYY-MM)
+      if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+        invalidRows++;
+        return;
+      }
+      
+      // Validate day (1-31)
+      const dayNum = parseInt(day);
+      if (isNaN(dayNum) || dayNum < 1 || dayNum > 31) {
+        invalidRows++;
+        return;
+      }
+      
+      const cleanHabitName = habitName.replace(/^"|"$/g, '').replace(/""/g, '"');
+      
+      // Add habit to map
+      if (!habitsMap.has(habitId)) {
+        habitsMap.set(habitId, { id: habitId, name: cleanHabitName });
+      }
+      
+      // Add record
+      if (!recordsMap[monthKey]) {
+        recordsMap[monthKey] = {};
+      }
+      if (!recordsMap[monthKey][habitId]) {
+        recordsMap[monthKey][habitId] = {};
+      }
+      recordsMap[monthKey][habitId][day] = status;
+      validRows++;
+    } else {
+      invalidRows++;
+    }
+  });
+  
+  if (validRows === 0) {
+    throw new Error('Nenhuma linha válida encontrada no arquivo CSV');
+  }
+  
+  if (invalidRows > 0) {
+    console.warn(`${invalidRows} linhas inválidas foram ignoradas durante a importação`);
+  }
+  
+  return {
+    habits: Array.from(habitsMap.values()),
+    records: recordsMap,
+    stats: { validRows, invalidRows }
+  };
+};
 
 // === Main Component ===
 export default function ConnectFourHabitTracker() {
@@ -137,6 +274,61 @@ export default function ConnectFourHabitTracker() {
     const d = new Date(year, month + delta, 1);
     setYear(d.getFullYear());
     setMonth(d.getMonth());
+  };
+
+  // CSV Export/Import functions
+  const handleExportCSV = () => {
+    const csvContent = exportToCSV(habits, records);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `habit-tracker-export-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportCSV = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csvText = e.target.result;
+        const { habits: importedHabits, records: importedRecords, stats } = importFromCSV(csvText);
+        
+        let confirmMessage = `Importar ${importedHabits.length} hábitos e seus registros?\n\n`;
+        confirmMessage += `• ${stats.validRows} linhas válidas processadas\n`;
+        if (stats.invalidRows > 0) {
+          confirmMessage += `• ${stats.invalidRows} linhas inválidas ignoradas\n`;
+        }
+        confirmMessage += `\nIsso substituirá todos os dados atuais.`;
+        
+        if (confirm(confirmMessage)) {
+          setHabits(importedHabits);
+          setRecords(importedRecords);
+          
+          let successMessage = `Dados importados com sucesso!\n\n`;
+          successMessage += `• ${importedHabits.length} hábitos importados\n`;
+          successMessage += `• ${stats.validRows} registros processados\n`;
+          if (stats.invalidRows > 0) {
+            successMessage += `• ${stats.invalidRows} linhas inválidas ignoradas`;
+          }
+          
+          alert(successMessage);
+        }
+      } catch (error) {
+        alert(`Erro ao importar arquivo CSV:\n\n${error.message}`);
+        console.error('CSV Import Error:', error);
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset file input
+    event.target.value = '';
   };
 
   // === UI Helpers ===
@@ -632,6 +824,33 @@ export default function ConnectFourHabitTracker() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* CSV Export/Import buttons */}
+              <div className="flex items-center gap-2">
+                <motion.button
+                  onClick={handleExportCSV}
+                  disabled={habits.length === 0}
+                  className="group flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 text-slate-600 shadow-sm backdrop-blur-sm transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700"
+                  title="Exportar dados para CSV"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="text-sm font-medium">Exportar</span>
+                </motion.button>
+                
+                <label className="group flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 text-slate-600 shadow-sm backdrop-blur-sm transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 hover:shadow-md dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700">
+                  <Upload className="h-4 w-4" />
+                  <span className="text-sm font-medium">Importar</span>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleImportCSV}
+                    className="hidden"
+                    title="Importar dados de CSV"
+                  />
+                </label>
+              </div>
+              
               <motion.button
                 onClick={() => setDarkMode(!darkMode)}
                 className="group flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/80 text-slate-600 shadow-sm backdrop-blur-sm transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-md dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700"
