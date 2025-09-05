@@ -1,7 +1,8 @@
 # Habit Tracker - Lig-4 Style
 
 A beautiful, interactive habit tracker built with Next.js and styled with Tailwind CSS, inspired by the Connect 4 game visualization.
-<img width="1641" height="887" alt="Screenshot 2025-09-05 at 08 09 33" src="https://github.com/user-attachments/assets/7bc956a0-93af-4c87-97e9-85fd02948e26" />
+
+<img width="1678" height="920" alt="Screenshot 2025-09-05 at 08 22 34" src="https://github.com/user-attachments/assets/7320a5fb-8241-418d-a04f-8cd5cd99323e" />
 
 ## Features
 
